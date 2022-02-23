@@ -1,44 +1,30 @@
-from operator import index
 import pandas as pd
 import time
 import streamlit as st
+from datetime import datetime
+
+now = datetime.now()
+
+current_time = now.strftime("%Y%m%d%H%M%S")
 startTime = time.time()
-import nltk
-import nltk.data
-nltk.download('punkt')
 
+def get_data(file_name):
+    df = pd.read_excel(file_name,'ET_PROMAT')
 
-tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+    df_in = df.loc[df['OUTIN'] > 0]
+    df_in = df_in[['PROID', 'MATID']]
+    df_out = df.loc[df['OUTIN'] <= 0]
+    df_out = df_out[['PROID', 'MATID']]
 
-def get_data (sentences_text , file):
-    sentences =tokenizer.tokenize(sentences_text)
-    df = pd.read_csv(file)
+    result = df_out.merge(df_in, on='PROID', how='left')
+    result = result.rename(columns={'MATID_x': 'input', 'MATID_y': 'output'})
+    result = result[['input', 'PROID','output']]
 
-    products_list = df.values.tolist()
+    return result
 
-    resultList = []
-
-    for p in products_list:
-        keyword = p[0].lower()
-        for sentence in sentences:
-            if keyword in sentence.lower():
-                ts = sentence
-            else:
-                ts = ''
-        resultList.append({
-            'Keyword' : keyword
-            ,'Text Snippet': ts
-            ,'Search Volume': p[2]
-            ,'Current Position': p[6]
-            ,'Destination URL': p[7]
-        })
-    return resultList
-
-
-keywords = st.text_area('Add the article')
-file_name = st.file_uploader('Upload upload websites ranking data (csv)')
-if st.button('Start Process The Keyword'):
-    resultList = get_data(keywords,file_name)
+file_name = st.file_uploader('Upload the file xlsx')
+if st.button('Start Process'):
+    resultList = get_data(file_name)
 
 
 
@@ -56,7 +42,7 @@ if st.button('Start Process The Keyword'):
     st.download_button(
         label="Download data as CSV",
         data=csv,
-        file_name='data_file.csv',
+        file_name=f'output_{current_time}.csv',
         mime='text/csv',
     )
 
