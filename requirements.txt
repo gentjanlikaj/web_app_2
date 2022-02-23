@@ -5,4 +5,3 @@ pandas>=1.2.4
 numpy>=1.21.0
 openpyxl>=3.0.7
 XlsxWriter==3.0.1
-nltk==3.7
